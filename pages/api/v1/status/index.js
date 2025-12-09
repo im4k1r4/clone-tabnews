@@ -1,5 +1,5 @@
 // 1. AQUI CRIAMOS A PONTE.
-import database from "../../../../infra/database.js";
+import database from "infra/database.js";
 
 async function status(request, response) {
   // 2. AQUI FAZEMOS O PEDIDO.
