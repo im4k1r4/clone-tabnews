@@ -1,12 +1,36 @@
-// 1. AQUI CRIAMOS A PONTE.
 import database from "infra/database.js";
 
 async function status(request, response) {
-  // 2. AQUI FAZEMOS O PEDIDO.
-  const result = await database.query("SELECT 1 + 1 AS SUM;");
-  // 5. AQUI CHEGA A RESPOSTA.
-  console.log(result.rows);
-  response.status(200).json({ status: "ok" });
+  // Data
+  const updatedAt = new Date().toISOString();
+
+  // Versão database (Postgres)
+  const databaseVersionResult = await database.query("SHOW server_version");
+  const databaseVersionValue = databaseVersionResult.rows[0].server_version;
+
+  // Máximo de conexões
+  const maxConnectionsResult = await database.query("SHOW max_connections");
+  const maxConnectionsValue = maxConnectionsResult.rows[0].max_connections;
+
+  // Conexões abertas
+  const databaseName = process.env.POSTGRES_DB;
+  const databaseOpenedConnectionsResult = await database.query({
+    text: "SELECT count(*) FROM pg_stat_activity WHERE datname = $1;",
+    values: [databaseName],
+  });
+  const databaseOpenedConnectionsValue =
+    databaseOpenedConnectionsResult.rows[0].count;
+
+  response.status(200).json({
+    updated_at: updatedAt,
+    dependencies: {
+      database: {
+        version: databaseVersionValue,
+        max_connections: parseInt(maxConnectionsValue),
+        open_connections: parseInt(databaseOpenedConnectionsValue),
+      },
+    },
+  });
 }
 
 export default status;
